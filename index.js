@@ -21,8 +21,17 @@ app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
 //cargar las rutas
+//const userRoutes = require("./routes/user");
+//const followRoutes = require("./routes/follow");
+const publicationsRoutes = require("./routes/publications");
+const userRoutes = require("./routes/user");
+const followRotes = require("./routes/follow");
 
+app.use("/api", userRoutes);
+app.use("/api", publicationsRoutes);
+app.use("/api", followRotes);
 
+//Ruta hardcore
 app.get("/ruta-prueba", (req, res) => {
     return res.status(200).json({
         "id": 1,
@@ -33,6 +42,7 @@ app.get("/ruta-prueba", (req, res) => {
 })
 
 } );
+///////////
 
 //poner a escuchar peticiones http
 app.listen(puerto, () => {
