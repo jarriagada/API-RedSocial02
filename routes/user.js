@@ -6,7 +6,7 @@ const userController = require("../controllers/user");
 
 //Definir las rutas
 router.get("/prueba-user", userController.pruebaUser)
-router.get("/register", userController.register)
+router.post("/register", userController.register) //enviar-guardar
 
 
 //Exportar router

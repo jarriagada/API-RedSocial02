@@ -13,88 +13,26 @@ const pruebaUser = (req, res) => {
 };
 
 
-
-//Metodo registra Usuario
-const register = (req, res) => {
-
-    //Recoger los datos de la peticion
-    let params = req.body;
-
-    //Comprobar los datos + validacion, si no pasa return lo saca.
-    if (!params.name || !params.password || !params.email || !params.nick) {
-        return res.status(400).json({
-            status: "error",
-            message: "Error campos obligatorios, faltan datos por enviar "
-        })
+const register = async (req, res) => {
+    const { name, surname, nick, email, password } = req.body;
+  
+    try {
+      const existingUser = await User.findOne({ $or: [{ email }, { nick }] });
+      if (existingUser) {
+        return res.status(400).json({ message: "El usuario ya existe" });
+      }
+  
+      // Crear un nuevo documento de usuario
+      const user = new User({ name, surname, nick, email, password });
+  
+      // Guardar el usuario en la base de datos
+      await user.save();
+  
+      res.status(201).json({ message: "Usuario registrado correctamente" });
+    } catch (error) {
+      res.status(500).json({ message: "Error al registrar el usuario", error });
     }
-
-    //Control de usurios duplicados
-    User.find({
-        $Or: [
-            { email: params.email.toLowerCase() },
-            { nick: params.nick.toLowerCase() }
-        ]
-
-    }).exec(async (error, users) => {
-        if (error) return res.status(500).json(
-            {
-                status: "error",
-                message: "error en la consulta de usuarios"
-            });
-
-        if (users && users.length >= 0) {
-            return res.status(200).json(
-                {
-                    status: "success",
-                    message: "el usuario ya existe"
-                })
-        };
-
-        //Cifrar la contraseña y actualizar el campo passwor 
-        //con la contraseña cifrada
-        let pwd = await bcrypt.hash(params.password, 10)
-        params.password = pwd;
-
-        //Crear nuevo objeto con el pwd encriptado
-        let user_to_save = new User(params);
-
-        //Guardar usuario en la BD
-        user_to_save.save((error, userStores) => {
-            if (error || !userStores) 
-                return res.status(500).json({
-                    status: "error",
-                    message: "error al guardar el usuario"
-                });
-
-
-        return res.status(200).json(
-            {
-                status: "success",
-                message: "Usuario registrado correctamente",
-                user: userStores
-            })
-            
-        })
-
-        //Devolver el resultado
-        return res.status(200).json({
-            status: "success",
-            message: "Usuario Registrado",
-            params,
-            user_to_save
-        });
-
-    }
-
-    );
-
-
-
-
-
-
-}
-
+  }
 
 
 //Exportar acciones
