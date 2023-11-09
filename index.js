@@ -3,6 +3,8 @@ const {connection} = require("./database/connection");
 const express = require("express");
 const cors = require("cors");
 
+const bodyParser = require("body-parser");
+
 //Mensaje
 console.log("API redsocial arrancada!!")
 
@@ -17,8 +19,10 @@ const puerto = 3900;
 app.use(cors());
 
 //convertir los datos del body a objetos js con midleware express
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+//app.use(express.json());
+//app.use(express.urlencoded({extended:true}));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 //cargar las rutas
 //const userRoutes = require("./routes/user");
