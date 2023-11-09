@@ -27,9 +27,9 @@ const publicationsRoutes = require("./routes/publications");
 const userRoutes = require("./routes/user");
 const followRotes = require("./routes/follow");
 
-app.use("/api", userRoutes);
-app.use("/api", publicationsRoutes);
-app.use("/api", followRotes);
+app.use("/api/user", userRoutes);
+app.use("/api/publications", publicationsRoutes);
+app.use("/api/follow", followRotes);
 
 //Ruta hardcore
 app.get("/ruta-prueba", (req, res) => {

@@ -1,17 +1,22 @@
-const {Schema, model} = require("mongoose");
+const {Schema, model, mongoose} = require("mongoose");
+//mongoose.set('strictQuery', false);
 
-const UserSchema = Shema({
+const UserSchema = Schema({
     name: {
         type: String,
-        required: True
+        required: true
     },
     surname: String,
     nick: {
         type: String,
         required: true
     },
-    email:{
-        Type: String,
+    email: {
+        type: String,
+        required: true
+    },
+    password: {
+        type: String,
         required: true
     },
     role: {
