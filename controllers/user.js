@@ -2,10 +2,10 @@
 const User = require("../models/user")
 //importar bcript para cifrar contraseña npm install bcrypt
 const bcrypt = require("bcrypt")
-
 //Importar servicios jwt
 const jwt = require("../services/jwt");
-
+//paginacion
+const mongoosepagination = require("mongoose-pagination");
 
 
 const register = async (req, res) => {
@@ -131,8 +131,51 @@ const profile = (req, res) => {
 
 };//fin profile
 
-//Listar usuarios con paginacion:
 
+
+//Listar usuarios con paginacion:
+const list = (req, res) => {
+  //saber en que pagina estamos, viene en la url
+  let page = 1;
+
+  if (req.params.page) {
+    page = req.params.page;
+  }
+  //siempre con valor entero
+  page = parseInt(page);
+  //consultar con mongoose paginate
+  let itemsPerPage = 5;
+
+  User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
+    //Validacion
+
+    if (error) {
+
+      return res.status(200).json({
+        status: "error",
+        mensaje: "error al listar usuarios",
+        page,
+        users,
+        total,
+        pages: false
+      });
+
+    }
+
+    //Devolver el resultado
+    return res.status(200).json({
+      status: "success",
+      mensaje: "ruta de Listado de usuarios",
+      page,
+      users,
+      total
+    });
+
+  })
+
+
+
+}
 
 
 //Exportar acciones
@@ -140,5 +183,6 @@ module.exports = {
     pruebaUser,
     register, 
     login,
-    profile
+    profile,
+    list
 }
