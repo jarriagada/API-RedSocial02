@@ -6,31 +6,43 @@ const bcrypt = require("bcrypt")
 const jwt = require("../services/jwt");
 //paginacion
 const mongoosepagination = require("mongoose-pagination");
+//libreia file system, para borrar archivo
+const fs = require("fs");
 
 
 const register = async (req, res) => {
-    const { name, surname, nick, email, password } = req.body;
-  
-    try {
-      const existingUser = await User.findOne({ $or: [{ email }, { nick }] });
-      if (existingUser) {
-        return res.status(400).json({ message: "El usuario ya existe" });
-      }
-  
-      // Encriptar la contraseña
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Crear un nuevo documento de usuario con la contraseña encriptada
-      const user = new User({ name, surname, nick, email, password: hashedPassword });
-  
-      // Guardar el usuario en la base de datos
-      await user.save();
-  
-      res.status(201).json({ message: "Usuario registrado correctamente" });
-    } catch (error) {
-      res.status(500).json({ message: "Error al registrar el usuario", error });
+  const { name, surname, password, email, nick, bio } = req.body;
+  try {
+    const existingUser = await User.findOne({
+      $or: [
+        { email: email.toLowerCase() },
+        { nick: nick.toLowerCase() }
+      ]
+    });
+    if (existingUser) {
+      return res.status(400).json({ message: "El usuario ya existe" });
     }
+
+    // Encriptar la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Crear un nuevo documento de usuario con la contraseña encriptada para devolver
+    const user = new User({ name, surname, nick: nick.toLowerCase(), email: email.toLowerCase(), password: hashedPassword, bio });
+
+    // Guardar el usuario en la base de datos
+    await user.save();
+
+    res.status(201).json({
+      message: "Usuario registrado correctamente",
+      user: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al registrar el usuario",
+      error
+    });
   }
+}
 
 
 const login = (req, res) => {
@@ -47,7 +59,7 @@ const login = (req, res) => {
   }
 
   // Buscar en la BD si existe
-  User.findOne({ email: params.email }, async (error, user) => { 
+  User.findOne({ email: params.email }, async (error, user) => {
     if (error || !user) {
       return res.status(404).json({
         status: 404,
@@ -60,7 +72,7 @@ const login = (req, res) => {
     try {
       // Comparar la contraseña proporcionada con la contraseña encriptada almacenada en la base de datos
       const passwordMatch = await bcrypt.compare(params.password, user.password);
-      
+
       if (!passwordMatch) {
         return res.status(400).json({
           status: 400,
@@ -70,7 +82,7 @@ const login = (req, res) => {
           passwordMatch: passwordMatch
         });
       }
-      
+
       //Conseguir el token
 
       // Devolver el Token
@@ -81,9 +93,9 @@ const login = (req, res) => {
         status: 200,
         message: "Logeado correctamente",
         user: {
-            id: user._id,
-            name: user.name,
-            nick: user.nick
+          id: user._id,
+          name: user.name,
+          nick: user.nick
         },
         token
       });
@@ -99,35 +111,35 @@ const login = (req, res) => {
 
 
 const pruebaUser = (req, res) => {
-    return res.status(200).json({
-        message : "...mensaje desde user/controller",
-        usuario: req.user
-    })
+  return res.status(200).json({
+    message: "...mensaje desde user/controller",
+    user: req.user
+  })
 }
 
 //Metodo para traer el perfil de un usuario
 const profile = (req, res) => {
-    //recibir el parametro que viene por la url
-    const id = req.params.id;
-    //Consulta para sacar los datos del usuario
-    User.findById(id)
-    .select({password: 0, role: 0})
+  //recibir el parametro que viene por la url
+  const id = req.params.id;
+  //Consulta para sacar los datos del usuario
+  User.findById(id)
+    .select({ password: 0, role: 0 })
     .exec((error, userProfile) => {
-        if(error || !userProfile) {
-            return res.status(404).json({
-                status: "error",
-                mensaje: "error al obtener el profile",
-                userProfile
-            })
-        }
+      if (error || !userProfile) {
+        return res.status(404).json({
+          status: "error",
+          mensaje: "error al obtener el profile",
+          userProfile
+        })
+      }
 
-        //Devolver el resultado
-        return res.status(200).json({
+      //Devolver el resultado
+      return res.status(200).json({
         status: "success",
-        mensaje: "Perfil encontrado",
+        message: "Perfil encontrado",
         userProfile
+      });
     });
-});
 
 };//fin profile
 
@@ -145,7 +157,7 @@ const list = (req, res) => {
   page = parseInt(page);
   //consultar con mongoose paginate
   let itemsPerPage = 5;
-
+  //Consulta con mongoose paginate
   User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
     //Validacion
 
@@ -153,11 +165,12 @@ const list = (req, res) => {
 
       return res.status(200).json({
         status: "error",
-        mensaje: "error al listar usuarios",
+        message: "error al listar usuarios",
         page,
         users,
         total,
-        pages: false
+        pages: Math.ceil(total / itemsPerPage)
+        //ceil redondea al alza
       });
 
     }
@@ -165,7 +178,7 @@ const list = (req, res) => {
     //Devolver el resultado
     return res.status(200).json({
       status: "success",
-      mensaje: "ruta de Listado de usuarios",
+      message: "ruta de Listado de usuarios",
       page,
       users,
       total
@@ -173,16 +186,142 @@ const list = (req, res) => {
 
   })
 
+};//fin list
+
+//metodo para actualizar usuario
+const update = (req, res) => {
+  //Recoger info del usuario a a ctualizar
+  const userIdentity = req.user;
+  const userToUpdate = req.body;
 
 
-}
+  //Eliminar campos sobrantes
+  delete userToUpdate.iat;
+  delete userToUpdate.exp;
+  delete userToUpdate.role;
+  delete userToUpdate.image;
+  //comprobar que el usuario ya existe
+  User.find({
+    $or: [
+      { email: userToUpdate.email.toLowerCase() },
+      { nick: userToUpdate.nick.toLowerCase() }
+    ]
+  }).exec(async (error, users) => {
+    if (error) return res.status(500).json({ status: "error", message: "error al comprobar usuario" })
+
+    let userIsset = false;
+    //recorrer los usuarios
+    users.forEach(user => {
+      if (user._id != userIdentity.id) userIsset = true;
+
+    });
+
+    if (userIsset) {
+      return res.status(201).json({
+        status: "success",
+        message: "el usuario ya existe"
+      })
+    }
+
+    //cifrar la contraseña
+    if (userToUpdate.password) {
+      let pwd = await bcrypt.hash(userToUpdate.password, 10);
+      userToUpdate.password = pwd;
+    }
+    userToUpdate.email = userToUpdate.email.toLowerCase();
+    userToUpdate.nick = userToUpdate.nick.toLowerCase();
+
+
+    try{
+       // buscar y actualizar
+    let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true });
+
+    if (error || !userUpdated) {
+      return res.status(500).json({
+        status: "error",
+        message: "error al actualizar usuario"
+      })
+    }
+
+     //Devolver el resultado
+     return res.status(200).json({
+      status: "success",
+      menssage: "usuario actualizado",
+      user: userUpdated
+    });
+
+    }catch{
+
+       //Devolver el resultado
+    return res.status(500).json({
+      status: "error",
+      menssage: "error al actualizar"
+    });
+
+    }
+  })//fin find
+};//fin update
+
+
+const upload = (req, res) => {
+  // Recoger el fichero de imagen y comprobar que existe
+  if (!req.file) {
+    return res.status(404).json({
+      status: "error",
+      message: "Se debe incluir una imagen"
+    });
+  }
+
+  // Conseguir el nombre del archivo
+  const image = req.file.originalname;
+
+  // Conseguir la extensión del archivo
+  const extension = image.split(".").pop().toLowerCase();
+
+  // Si la extensión no es correcta, borrar el archivo
+  if (
+    extension !== "png" &&
+    extension !== "jpg" &&
+    extension !== "jpeg" &&
+    extension !== "gif"
+  ) {
+    const filepath = req.file.path;
+    fs.unlinkSync(filepath);
+    return res.status(400).json({
+      status: "error",
+      message: "Extensión inválida"
+    });
+  }
+
+  // Actualizar el campo "image" en el usuario
+  User.findByIdAndUpdate(
+    req.user.id,
+    { image: image },
+    { new: true },
+    (error, userUpdated) => {
+      if (error || !userUpdated) {
+        return res.status(500).json({
+          status: "error",
+          message: "Error al actualizar avatar de usuario"
+        });
+      }
+      return res.status(200).json({
+        status: "success",
+        file: req.file,
+        user: userUpdated
+      });
+    }
+  );
+};
 
 
 //Exportar acciones
 module.exports = {
-    pruebaUser,
-    register, 
-    login,
-    profile,
-    list
+  pruebaUser,
+  register,
+  login,
+  profile,
+  list,
+  update,
+  upload
 }
