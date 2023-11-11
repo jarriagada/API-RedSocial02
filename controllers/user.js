@@ -8,6 +8,8 @@ const jwt = require("../services/jwt");
 const mongoosepagination = require("mongoose-pagination");
 //libreia file system, para borrar archivo
 const fs = require("fs");
+//para el path absoluto
+const path = require("path")
 
 
 const register = async (req, res) => {
@@ -315,6 +317,41 @@ const upload = (req, res) => {
 };
 
 
+//Metodo para mostrar avatar
+const avatar = (req, res) => {
+
+  //Sacar el parametro de la url :file
+  const file = req.params.file;
+
+  //Montar el path real de la imagen
+  const filePath = "./uploads/avatars/" + file;
+
+    /*
+  //Comprobar si un archivo existe con stat
+  fs.access(filePath, (error, exists) => {
+
+    if (error || !exists) {
+      return res.status(404).json({
+        status: "error",
+        message: "no existe la imagen"
+      })
+    }
+*/
+fs.access(filePath, fs.constants.F_OK, (error) => {
+  if (error) {
+    return res.status(404).json({
+      status: "error",
+      message: "No existe la imagen"
+    });
+  }
+
+    //ruta absoluta
+  return res.sendFile(path.resolve(filePath));
+
+  })
+
+}
+
 //Exportar acciones
 module.exports = {
   pruebaUser,
@@ -323,5 +360,6 @@ module.exports = {
   profile,
   list,
   update,
-  upload
+  upload,
+  avatar
 }
