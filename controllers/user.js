@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt")
 const jwt = require("../services/jwt");
 
 
+
 const register = async (req, res) => {
     const { name, surname, nick, email, password } = req.body;
   
@@ -96,8 +97,48 @@ const login = (req, res) => {
   });
 }
 
+
+const pruebaUser = (req, res) => {
+    return res.status(200).json({
+        message : "...mensaje desde user/controller",
+        usuario: req.user
+    })
+}
+
+//Metodo para traer el perfil de un usuario
+const profile = (req, res) => {
+    //recibir el parametro que viene por la url
+    const id = req.params.id;
+    //Consulta para sacar los datos del usuario
+    User.findById(id)
+    .select({password: 0, role: 0})
+    .exec((error, userProfile) => {
+        if(error || !userProfile) {
+            return res.status(404).json({
+                status: "error",
+                mensaje: "error al obtener el profile",
+                userProfile
+            })
+        }
+
+        //Devolver el resultado
+        return res.status(200).json({
+        status: "success",
+        mensaje: "Perfil encontrado",
+        userProfile
+    });
+});
+
+};//fin profile
+
+//Listar usuarios con paginacion:
+
+
+
 //Exportar acciones
 module.exports = {
+    pruebaUser,
     register, 
-    login
+    login,
+    profile
 }
