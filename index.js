@@ -27,26 +27,15 @@ app.use(bodyParser.json());
 //cargar las rutas
 //const userRoutes = require("./routes/user");
 //const followRoutes = require("./routes/follow");
-const publicationsRoutes = require("./routes/publications");
 const userRoutes = require("./routes/user");
 const followRotes = require("./routes/follow");
+const publicationsRoutes = require("./routes/publications");
 
 app.use("/api/user", userRoutes);
-app.use("/api/publications", publicationsRoutes);
 app.use("/api/follow", followRotes);
-
-//Ruta hardcore
-app.get("/ruta-prueba", (req, res) => {
-    return res.status(200).json({
-        "id": 1,
-        "Nombre": "jarriagada",
-        "web": "jarriagada.cl"
+app.use("/api/publications", publicationsRoutes);
 
 
-})
-
-} );
-///////////
 
 //poner a escuchar peticiones http
 app.listen(puerto, () => {
