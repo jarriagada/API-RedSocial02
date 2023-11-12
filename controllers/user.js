@@ -4,12 +4,16 @@ const User = require("../models/user")
 const bcrypt = require("bcrypt")
 //Importar servicios jwt
 const jwt = require("../services/jwt");
+//Importar servicio followService
+const followService = require("../services/followService");
 //paginacion
 const mongoosepagination = require("mongoose-pagination");
 //libreia file system, para borrar archivo
 const fs = require("fs");
 //para el path absoluto
 const path = require("path")
+
+
 
 
 const register = async (req, res) => {
@@ -126,7 +130,7 @@ const profile = (req, res) => {
   //Consulta para sacar los datos del usuario
   User.findById(id)
     .select({ password: 0, role: 0 })
-    .exec((error, userProfile) => {
+    .exec(async(error, userProfile) => {
       if (error || !userProfile) {
         return res.status(404).json({
           status: "error",
@@ -135,11 +139,16 @@ const profile = (req, res) => {
         })
       }
 
+      //Info de Seguimiento
+      const followInfo = await followService.followThisUser(req.user.id, id)
+
       //Devolver el resultado
       return res.status(200).json({
         status: "success",
         message: "Perfil encontrado",
-        userProfile
+        user: userProfile,
+        following: followInfo.following,
+        followers: followInfo.followers
       });
     });
 
@@ -160,22 +169,20 @@ const list = (req, res) => {
   //consultar con mongoose paginate
   let itemsPerPage = 5;
   //Consulta con mongoose paginate
-  User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
+  User.find().sort('_id').paginate(page, itemsPerPage, async(error, users, total) => {
     //Validacion
 
-    if (error) {
+    if (error || !users ) {
 
-      return res.status(200).json({
+      return res.status(400).json({
         status: "error",
         message: "error al listar usuarios",
-        page,
-        users,
-        total,
-        pages: Math.ceil(total / itemsPerPage)
-        //ceil redondea al alza
+        error
       });
 
     }
+
+    let followsUserIds = await followService.followUserIds(req.user.id)
 
     //Devolver el resultado
     return res.status(200).json({
@@ -183,7 +190,11 @@ const list = (req, res) => {
       message: "ruta de Listado de usuarios",
       page,
       users,
-      total
+      total,
+      page,
+      pages: Math.ceil(total / itemsPerPage),
+      user_following: followsUserIds.following,
+      user_follow_me: followsUserIds.followers
     });
 
   })
@@ -326,17 +337,6 @@ const avatar = (req, res) => {
   //Montar el path real de la imagen
   const filePath = "./uploads/avatars/" + file;
 
-    /*
-  //Comprobar si un archivo existe con stat
-  fs.access(filePath, (error, exists) => {
-
-    if (error || !exists) {
-      return res.status(404).json({
-        status: "error",
-        message: "no existe la imagen"
-      })
-    }
-*/
 fs.access(filePath, fs.constants.F_OK, (error) => {
   if (error) {
     return res.status(404).json({
