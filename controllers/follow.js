@@ -1,6 +1,11 @@
 // Importar modelo
 const Follow = require("../models/follow");
 const User = require("../models/user");
+//importar dependencias mongoose para paginar
+const mongoosePagination = require("mongoose-pagination");
+//importar servicio followService
+const followService = require("../services/followService");
+
 
 // Acción de prueba
 const pruebaFollow = (req, res) => {
@@ -62,8 +67,6 @@ const saveFollow = (req, res) => {
   });
 };
 
-
-
 const unFollow = async (req, res) => {
   try {
     //console.log(req.params)
@@ -101,10 +104,75 @@ const unFollow = async (req, res) => {
   }
 };
 
+// metodo para listar usuarios que cualquier usuario esta siguiendo
+const following = (req, res) => {
+
+    /* Sacar el id del usurio identificado por token
+    //para consultarm el user del documento, quien yo sigo
+    //pero la prioridad se la da al parametro
+    //para pruebas enviar el id propio del que se identifica*/
+    let userId = req.user.id;
+
+    //Comprobar si llego el id por parametrp en la url
+    //se le da prioridad al id que viene por parametro, 
+    //userId sera igual al id del parametro
+   if(req.params.id) userId = req.params.id;
+
+    //comprobar que llege el parametro paguina, si no la pagina 1
+    let page = 1;
+    //compruebo si viene por la url entonces page toma ese valor
+    if(req.params.page) page = req.params.page;
+
+    //cuantos usauarios por pagina quiero mostrar
+    let itemsPerPage = 5;
+
+    //Find a follow, popular datos de lols usuarios y paginar con mongoose paginate, usando el modelo
+    Follow.find({ user: userId })
+    .populate("user followed", "-password -role -__v")
+    .paginate(page, itemsPerPage, async (error, follows, total) => {
+        if(error || !follows) {
+            return res.status(400).json({
+                status: "error",
+                message: "error al listar follwings",
+                user: userId,
+                error: error
+              });
+        }
+        
+        //sacar un array de ids de los usuarios que me siguen y los que sigo
+        let followUserIds = await followService.followUserIds(req.user.id);
+
+        return res.status(200).json({
+            status: "success",
+            message: "listado de usuarios que estoy siguiendo",
+            follows,
+            total,
+            pages: Math.ceil(total/itemsPerPage),
+            user_following: followUserIds.following,
+            user_follow_me: followUserIds.followers
+          });
+        
+    })
+    
+
+}
+
+// metodo para listar usuarios que me siguen (soy seguido o seguidores)
+const followers = (req, res) => {
+
+    return res.status(200).json({
+        status: "success",
+        message: "listado de usuarios que me siguen"
+      });
+
+}
+
 
 // Exportar acciones
 module.exports = {
   pruebaFollow,
   saveFollow,
-  unFollow
+  unFollow,
+  following,
+  followers
 };

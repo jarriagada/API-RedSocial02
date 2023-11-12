@@ -9,7 +9,8 @@ const followController = require("../controllers/follow");
 //post para enviar y guardar follow
 router.post("/saveFollow", auth, followController.saveFollow);
 router.delete("/unFollow/:id", auth, followController.unFollow);
-
+router.get("/following/:id?/:page?", auth, followController.following);
+router.get("/followers/:id?/:page?", auth, followController.followers);
 
 //Exportar router
 module.exports = router;
