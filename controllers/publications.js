@@ -1,4 +1,4 @@
-
+const Publication = require("../models/publication");
 
 //Acciones de prueba:
 const pruebaPublications = (req, res) =>{
@@ -7,8 +7,6 @@ const pruebaPublications = (req, res) =>{
         message: "Desde PublicationController"
     })
 } ;
-
-
 
 
 
