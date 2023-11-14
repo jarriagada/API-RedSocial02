@@ -123,6 +123,7 @@ const pruebaUser = (req, res) => {
   })
 }
 
+
 //Metodo para traer el perfil de un usuario
 const profile = (req, res) => {
   //recibir el parametro que viene por la url
@@ -139,21 +140,67 @@ const profile = (req, res) => {
         })
       }
 
+      followService.followUserIds(req.user.id, id),
+      followService.followThisUser(id, req.user.id)
+
       //Info de Seguimiento
-      const followInfo = await followService.followThisUser(req.user.id, id)
+      let followsUserIds = await followService.followUserIds(req.user.id)
 
       //Devolver el resultado
       return res.status(200).json({
         status: "success",
         message: "Perfil encontrado",
         user: userProfile,
-        following: followInfo.following,
-        followers: followInfo.followers
+        user_following: followsUserIds.following,
+        user_follow_me: followsUserIds.followers
+        
       });
     });
 
 };//fin profile
 
+/*
+const profile = async(req, res) => {
+  try {
+
+    const { id } = req.params;
+    console.log( "id del parametro" + id)
+
+    const userProfile = await User.findOne({ _id: id }).select({
+      password: 0,
+      role: 0
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        status: "error",
+        mensaje: "No se encontró el perfil del usuario",
+      });
+    }
+
+    const followInfoPromises = [
+      followService.followUserIds(req.user.id, id),
+      followService.followThisUser(id, req.user.id)
+    ];
+
+    const [following, followers] = await Promise.all(followInfoPromises);
+
+    return res.status(200).json({
+      status: "success",
+      following : following,
+      followers: followers
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      mensaje: "Error al obtener el perfil del usuario",
+      error
+    });
+  }
+};
+
+*/
 
 
 //Listar usuarios con paginacion:
