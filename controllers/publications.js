@@ -120,6 +120,75 @@ const remove = (req, res) => {
         });
     });
 };
+/*
+//listar publicaciones de un usuario
+const user = (req, res) => {
+    //sacar el id de usuario
+    let userId = req.params.id;
+
+    //controlar la pagina
+    let page = 1;
+    if(req.params.page) page = req.params.page;
+    
+    const itemsPerPage = 5;
+    
+    //find, populate, ordenar, paginar, usando el modelo y mongoose-pagination
+    Publication.find({"user": userId})
+        .sort("-create_at")
+        .populate('user', '-password - __v')
+        .paginate(page, itemsPerPage, (error, publications, total) => {
+
+
+
+            //devolver resultado
+            return res.status(200).json({
+            status: "success",
+            message: "publicaciones del perfil de un usuario",
+            publications,
+            page,
+            total,
+            pages: Math.ceil(total/itemsPerPage),
+            publications,
+            user: req.user
+        });
+
+    })
+}
+*/
+const user = (req, res) => {
+    // Sacar el id de usuario
+    const userId = req.params.id;
+
+    // Controlar la página
+    let page = 1;
+    if (req.params.page) {
+        page = req.params.page;
+    }
+    
+    const itemsPerPage = 5;
+    
+    // Utilizar el método paginate del modelo Publication para buscar, ordenar y paginar las publicaciones
+    Publication.find({ user: userId })
+        .sort("-create_at")
+        .populate('user', '-password -__v')
+        .paginate(page, itemsPerPage, (error, publications, total) => {
+            if (error || !publications) {
+                return res.status(500).json({
+                    status: "error",
+                    message: "No hay publicaciones para mostrar"
+                });
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "Publicaciones del perfil de un usuario",
+                publications: publications,
+                page,
+                total,
+                pages: Math.ceil(total / itemsPerPage),
+                user: req.user
+            });
+        });
+}
 
 //listar todas las publications
 
@@ -136,5 +205,6 @@ module.exports ={
     pruebaPublications,
     save,
     detail,
-    remove
+    remove,
+    user
 };

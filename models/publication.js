@@ -14,9 +14,8 @@ const publicationsSchema = Schema({
     file: String,
     create_at: {
         type: Date,
-        default: Date.Now
+        default: Date.now
     }
-
 });
 
 module.exports = model("Publication", publicationsSchema, "publications");

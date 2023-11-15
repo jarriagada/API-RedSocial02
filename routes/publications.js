@@ -13,6 +13,9 @@ router.post("/save", auth, publicationsController.save)
 router.get("/detail/:id", auth, publicationsController.detail)
 //delete publication
 router.delete("/remove/:id", auth, publicationsController.remove);
+//obtener la publication del usuario autenticado
+router.get("/user/:id/:page?", auth, publicationsController.user)
+
 
 //Exportar router
 module.exports = router;
