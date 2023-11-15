@@ -172,7 +172,7 @@ const user = (req, res) => {
         .sort("-create_at")
         .populate('user', '-password -__v')
         .paginate(page, itemsPerPage, (error, publications, total) => {
-            if (error || !publications) {
+            if (error || publications.length <=0) {
                 return res.status(500).json({
                     status: "error",
                     message: "No hay publicaciones para mostrar"
@@ -189,12 +189,123 @@ const user = (req, res) => {
             });
         });
 }
+/*
+//subir ficheros
+const upload = (req, res) => {
+
+    const publicationId = req.params.id;
+    // Recoger el fichero de imagen y comprobar que existe
+    if (!req.file) {
+      return res.status(404).json({
+        status: "error",
+        message: "Se debe incluir una imagen"
+      });
+    }
+  
+    // Conseguir el nombre del archivo
+    const file = req.file.originalname;
+  
+    // Conseguir la extensión del archivo
+    const extension = image.split(".").pop().toLowerCase();
+  
+    // Si la extensión no es correcta, borrar el archivo
+    if (
+      extension !== "png" &&
+      extension !== "jpg" &&
+      extension !== "jpeg" &&
+      extension !== "gif"
+    ) {
+      const filepath = req.file.path;
+      fs.unlinkSync(filepath);
+      return res.status(400).json({
+        status: "error",
+        message: "Extensión inválida"
+      });
+    }
+  
+    // Actualizar el campo "image" en el usuario
+    Publication.findByIdAndUpdate(
+      { "user": req.user.id, "_id": publicationId},
+      { file: file },
+      { new: true },
+      (error, publicationUpdated) => {
+        if (error || !publicationUpdated) {
+          return res.status(500).json({
+            status: "error",
+            message: "Error al actualizar la publicacion"
+          });
+        }
+        return res.status(200).json({
+          status: "success",
+          publicationUpdated,
+          file: req.file,
+          
+        });
+      }
+    );
+  };
+  */
+
+  const upload = (req, res) => {
+    const publicationId = req.params.id;
+    // Recoger el fichero de imagen y comprobar que existe
+    if (!req.file) {
+        return res.status(404).json({
+            status: "error",
+            message: "Se debe incluir una imagen"
+        });
+    }
+
+    // Conseguir el nombre del archivo
+    const file = req.file.filename;
+
+    // Conseguir la extensión del archivo
+    const extension = file.split(".").pop().toLowerCase();
+
+    // Si la extensión no es correcta, borrar el archivo
+    if (
+        extension !== "png" &&
+        extension !== "jpg" &&
+        extension !== "jpeg" &&
+        extension !== "gif"
+    ) {
+        const filepath = req.file.path;
+        fs.unlinkSync(filepath);
+        return res.status(400).json({
+            status: "error",
+            message: "Extensión inválida"
+        });
+    }
+
+    // Actualizar el campo "image" en la publicación
+    Publication.findByIdAndUpdate(
+        { user: req.user.id, _id: publicationId },
+        { file: file },
+        { new: true },
+        (error, publicationUpdated) => {
+            if (error || !publicationUpdated) {
+                return res.status(500).json({
+                    status: "error",
+                    message: "Error al actualizar la publicación"
+                });
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "Imagen subida correctamente",
+                publication: publicationUpdated,
+                file: req.file
+            });
+        }
+    );
+};
+  
+
 
 //listar todas las publications
 
+
 //Listar las publication de un usuario
 
-//subir ficheros
 
 //Devolver archivos multimedia imagenes
 
@@ -206,5 +317,6 @@ module.exports ={
     save,
     detail,
     remove,
-    user
+    user,
+    upload
 };
