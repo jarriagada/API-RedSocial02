@@ -61,7 +61,6 @@ const detail = (req, res) => {
                 status: "error",
                 message: "Error al obtener la publication"
             }) 
-
         }
 
         return res.status(200).json({
@@ -70,17 +69,57 @@ const detail = (req, res) => {
             publication: publicationStored
         })
 
-
     })
 
-
-
-    
-
-
-}
-
+};
+/*
 //eliminar publication
+const remove = (req, res) => {
+    //sacar el id de la publication a eliminar
+    const publicationId = req.params.id;
+    //find y remove, con el pudelo, publicaciones que solo sean nuestras
+    Publication.find({ "user": req.user.id, "_id": publicationId }).remove(error = {
+        if(error) {
+            return res.status(500).json({
+                status: "error",
+                message: "No se ha eliminado la publication"
+            });
+
+        }
+
+            return res.status(200).json({
+            status: "success",
+            message: "Publication obtenida",
+            publication: publicationStored
+        })
+    });
+
+};
+*/
+const remove = (req, res) => {
+    // Sacar el id de la publicación a eliminar
+    const publicationId = req.params.id;
+    // Buscar y eliminar solo las publicaciones que sean nuestras
+    Publication.findOneAndRemove({ user: req.user.id, _id: publicationId }, (error, publication) => {
+        if (error) {
+            return res.status(500).json({
+                status: "error",
+                message: "No se ha eliminado la publicación"
+            });
+        }
+        if (!publication) {
+            return res.status(404).json({
+                status: "error",
+                message: "No se ha encontrado la publicación"
+            });
+        }
+        return res.status(200).json({
+            status: "success",
+            message: "Publicación eliminada",
+            publication: publication
+        });
+    });
+};
 
 //listar todas las publications
 
@@ -92,10 +131,10 @@ const detail = (req, res) => {
 
 
 
-
 //Exportar acciones
 module.exports ={ 
     pruebaPublications,
     save,
-    detail
-}
+    detail,
+    remove
+};

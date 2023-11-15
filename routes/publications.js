@@ -11,6 +11,8 @@ router.get("/prueba-publications", publicationsController.pruebaPublications)
 router.post("/save", auth, publicationsController.save)
 //One publication
 router.get("/detail/:id", auth, publicationsController.detail)
+//delete publication
+router.delete("/remove/:id", auth, publicationsController.remove);
 
 //Exportar router
 module.exports = router;
