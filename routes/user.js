@@ -34,7 +34,9 @@ router.put("/update", auth, userController.update);
 //Metodo para subir archivos, auth y midleware de de multer
 router.post("/upload", [auth, uploads.single("file0")], userController.upload);
 //avatar
-router.get("/avatar/:file", auth, userController.avatar);
+router.get("/avatar/:file", userController.avatar);
+//counter
+router.get("/counters/:id", auth, userController.counters);
 
 //Exportar router
 module.exports = router;

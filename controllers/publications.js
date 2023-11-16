@@ -1,5 +1,16 @@
-const publication = require("../models/publication");
 const Publication = require("../models/publication");
+
+//paginacion
+const mongoosepagination = require("mongoose-pagination");
+//libreia file system, para borrar archivo
+const fs = require("fs");
+//para el path absoluto
+const path = require("path")
+
+//importar servicio followService
+const followService = require("../services/followService");
+
+
 
 //Acciones de prueba:
 const pruebaPublications = (req, res) =>{
@@ -170,7 +181,7 @@ const user = (req, res) => {
     // Utilizar el método paginate del modelo Publication para buscar, ordenar y paginar las publicaciones
     Publication.find({ user: userId })
         .sort("-create_at")
-        .populate('user', '-password -__v')
+        .populate('user', '-password -__v -role -email')
         .paginate(page, itemsPerPage, (error, publications, total) => {
             if (error || publications.length <=0) {
                 return res.status(500).json({
@@ -300,14 +311,87 @@ const upload = (req, res) => {
 };
   
 
+//Devolver archivos multimedia imagenes (devolver avatar)
+const media = (req, res) => {
 
+    //Sacar el parametro de la url :file
+    const file = req.params.file;
+  
+    //Montar el path real de la imagen
+    const filePath = "./uploads/publications/" + file;
+  
+  fs.access(filePath, fs.constants.F_OK, (error) => {
+    if (error) {
+      return res.status(404).json({
+        status: "error",
+        message: "No existe la imagen"
+      });
+    }
+  
+      //ruta absoluta
+    return res.sendFile(path.resolve(filePath));
+  
+    })
+  
+  }
+  
 //listar todas las publications
+const feed = async (req, res) =>{
+    //sacar la pagina actual
+    let page = 1;
 
+    if(req.params.page) page= req.params.page;
+
+    //establecer el numero de elemnetos por pagina
+    const itemsPerPage = 5;
+
+    //sacar un array de identificadores de usuarios
+
+    try{
+
+        const myFollows = await followService.followUserIds(req.user.id);
+        //que user contenga cualquiera de mis followins
+        const publications = await Publication.find({
+            user: myFollows.following
+        })
+        .populate("user", "-password -role -__v -email")
+        .sort("-create_at")
+        .paginate(page, itemsPerPage, (error, publications, total) => {
+
+            if (error || !publications) {
+                return res.status(404).json({
+                  status: "error",
+                  message: "No hay publicaciones para mostrar"
+                });
+              }
+
+
+            return res.status(200).json({
+                status: "success",
+                message: "Follows encontrados",
+                following: myFollows.following,
+                total,
+                page,
+                pages: Math.ceil(total/itemsPerPage),
+                publications
+            });
+        });
+        
+    }catch{
+
+        return res.status(500).json({
+            status: "error",
+            message: "error al conseguir los follows",
+        });
+
+    }
+    
+    //find con el modelo Publication utilizando el operador in
+       
+
+}
 
 //Listar las publication de un usuario
-
-
-//Devolver archivos multimedia imagenes
 
 
 
@@ -318,5 +402,7 @@ module.exports ={
     detail,
     remove,
     user,
-    upload
+    upload, 
+    media,
+    feed
 };

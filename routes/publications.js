@@ -21,8 +21,6 @@ const storage = multer.diskStorage({
 const uploads = multer({storage});
 //fin configuracion multer
 
-
-
 const publicationsController = require("../controllers/publications");
 
 //Definir las rutas
@@ -37,6 +35,11 @@ router.delete("/remove/:id", auth, publicationsController.remove);
 router.get("/user/:id/:page?", auth, publicationsController.user)
 //update publication file imagen
 router.post("/upload/:id",[auth, uploads.single("file0")], publicationsController.upload);
+//media, ver imagenes subidacion de publicaciones
+router.get("/media/:file", publicationsController.media);
+//feed, no recibe parametros, lista todo, opcional page
+router.get("/feed/:page?", auth, publicationsController.feed)
+
 
 //Exportar router
 module.exports = router;

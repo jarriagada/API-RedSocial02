@@ -129,7 +129,7 @@ const following = (req, res) => {
 
     //Find a follow, popular datos de lols usuarios y paginar con mongoose paginate, usando el modelo
     Follow.find({ user: userId })
-    .populate("user followed", "-password -role -__v")
+    .populate("user followed", "-password -role -__v -email")
     .paginate(page, itemsPerPage, async (error, follows, total) => {
         if(error || !follows) {
             return res.status(400).json({
@@ -238,7 +238,7 @@ const followers = (req, res) => {
 
  //Find a follow, popular datos de lols usuarios y paginar con mongoose paginate, usando el modelo
     Follow.find({ followed: userId })
-    .populate("user", "-password -role -__v")
+    .populate("user", "-password -role -__v -email")
     .paginate(page, itemsPerPage, async (error, follows, total) => {
         if(error || !follows) {
             return res.status(400).json({
